@@ -1,0 +1,7 @@
+sales:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/sales.csv
+  load_args:
+    sep: ","
+    decimal: "."
+    encoding: "utf-8"
