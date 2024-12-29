@@ -6,9 +6,9 @@ sales:
     decimal: "."
     encoding: "utf-8"
 
-test_output:
+treated_sales_data:
   type: pandas.CSVDataset
-  filepath: data/02_intermediate/test_output.csv
+  filepath: data/03_primary/treated_sales_data.csv
   save_args:
     index: False
     sep: ","

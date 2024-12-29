@@ -38,13 +38,13 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 fill_na_with_median,
                 inputs=["sales_with_dates_string", "params:columns_to_fill_na"],
-                outputs="treated_sales_data",
+                outputs="treated_sales_data_initial",
                 name="fill_na_with_median",
             ),
             node(
                 calculate_desconto_percentual,
                 inputs=[
-                    "treated_sales_data",
+                    "treated_sales_data_initial",
                     "params:features_to_create.desconto_percentual.columns_to_use",
                     "params:features_to_create.desconto_percentual.name",
                 ],
@@ -93,7 +93,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "params:features_to_create.vlr_venda_baseline.columns_to_use",
                     "params:features_to_create.vlr_venda_baseline.name",
                 ],
-                outputs="test_output",
+                outputs="treated_sales_data",
                 name="calculate_vlr_venda_baseline",
             )
         ]
