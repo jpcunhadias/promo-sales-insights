@@ -1,0 +1,74 @@
+# This is a boilerplate parameters config generated for pipeline 'data_processing'
+# using Kedro 0.19.10.
+#
+# Documentation for this file format can be found in "Parameters"
+# Link: https://docs.kedro.org/en/0.19.10/configuration/parameters.html
+
+columns_to_convert_to_string:
+  - cod_ciclo
+  - cod_ano
+  - cod_agrupador_sap_material
+
+columns_to_create_dates:
+  - cod_ciclo
+
+derived_time_columns:
+  cod_ano: cod_ano
+  semana: semana
+  data_inicio_semana: data_inicio_semana
+
+columns_to_fill_na:
+  - vlr_desconto_real
+
+column_receita_praticada:
+  - vlr_rbv_real_so_tt
+
+features_to_create:
+  desconto_percentual:
+    columns_to_use:
+      - vlr_preco_venda
+      - vlr_preco_base
+    name: desconto_percentual
+
+  performance:
+    columns_to_use:
+      - data_inicio_semana
+      - vlr_rbv_real_so_tt
+      - desconto_percentual
+    labels:
+        - Baixa
+        - Média
+        - Alta
+    name: performance
+    columns_to_merge_on:
+      - data_inicio_semana
+      - performance
+    how: left
+
+  faixa_receita:
+    column_to_use: vlr_rbv_real_so_tt
+    bins:
+      - 0
+      - 5000
+      - 20000
+      - 50000
+      - 100000
+    labels:
+      - Muito Baixa
+      - Baixa
+      - Média
+      - Alta
+      - Muito Alta
+    name: faixa_receita
+
+  desconto_percentual_medio:
+    columns_to_group_by_and_merge:
+      - des_categoria_material
+      - data_inicio_semana
+    coluna_desconto: desconto_percentual
+
+  vlr_venda_baseline:
+    columns_to_use:
+      - vlr_rbv_real_so_tt
+      - desconto_percentual_medio
+    name: vlr_venda_baseline
