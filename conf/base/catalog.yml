@@ -5,3 +5,12 @@ sales:
     sep: ","
     decimal: "."
     encoding: "utf-8"
+
+test_output:
+  type: pandas.CSVDataset
+  filepath: data/02_intermediate/test_output.csv
+  save_args:
+    index: False
+    sep: ","
+    decimal: "."
+    encoding: "utf-8"

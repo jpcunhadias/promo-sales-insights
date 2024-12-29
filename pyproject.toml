@@ -48,3 +48,6 @@ attr = "promo_sales_insights.__version__"
 [tool.setuptools.packages.find]
 where = [ "src",]
 namespaces = false
+
+[tool.kedro_telemetry]
+project_id = "8a9909f689af4d538b1505fb1c8d97c4"
