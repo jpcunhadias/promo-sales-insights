@@ -41,8 +41,23 @@ def convert_columns_to_string(data: pd.DataFrame, columns: list[str]) -> pd.Data
     """
     for col in columns:
         data[col] = data[col].astype(str)
+
     return data
 
+def adjust_separator(data: pd.DataFrame, column: str, current_separator: str, new_separator:str) -> pd.DataFrame:
+    """
+    Adjust separator
+    """
+    data[column] = data[column].str.replace(current_separator, new_separator)
+    return data
+
+def round_columns(data: pd.DataFrame, columns: list[str], decimals: int) -> pd.DataFrame:
+    """
+    Round columns
+    """
+    for col in columns:
+        data[col] = data[col].round(decimals)
+    return data
 
 def fill_na_with_median(data: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     """

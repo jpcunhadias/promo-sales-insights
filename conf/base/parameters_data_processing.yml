@@ -9,6 +9,17 @@ columns_to_convert_to_string:
   - cod_ano
   - cod_agrupador_sap_material
 
+adjust_separator:
+  column_name: cod_agrupador_sap_material
+  separator:
+    current: .
+    new: /
+
+round_columns:
+  columns:
+    - vlr_rbv_tabela_so_tt
+  decimals: 2
+
 columns_to_create_dates:
   - cod_ciclo
 

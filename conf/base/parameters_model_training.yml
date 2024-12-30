@@ -7,7 +7,6 @@
 target_variable: "vlr_rbv_real_so_tt"  # Target variable for the model
 datetime_column: "data_inicio_semana"  # Column representing the datetime
 prediction_column: "prediction"      # Column representing the prediction
-column_to_convert_to_str: "cod_agrupador_sap_material"  # Column to convert to string
 week_range_for_lags: 3                # Number of weeks for lag features
 window_rolling_mean: 3                # Window size for rolling mean
 
@@ -23,6 +22,27 @@ training_params:
     num_leaves: 23
     subsample: 0.8505607445033715
     colsample_bytree: 0.8249469878368129
+
+optimization_params:
+  n_estimators:
+    type: int
+    range: [50, 200]
+  learning_rate:
+    type: float
+    range: [0.01, 0.2]
+  max_depth:
+    type: int
+    range: [3, 7]
+  num_leaves:
+    type: int
+    range: [20, 40]
+  subsample:
+    type: float
+    range: [0.8, 1.0]
+  colsample_bytree:
+    type: float
+    range: [0.8, 1.0]
+  random_state: 42
 
 winsorize:
   column: "vlr_desconto_real"         # Column to apply winsorization

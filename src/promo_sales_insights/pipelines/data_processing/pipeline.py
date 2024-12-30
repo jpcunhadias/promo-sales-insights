@@ -7,6 +7,8 @@ from kedro.pipeline import Pipeline, pipeline, node
 from .nodes import (
     extract_date_from_code,
     convert_columns_to_string,
+    adjust_separator,
+    round_columns,
     fill_na_with_median,
     calculate_desconto_percentual,
     calculate_performance,
@@ -36,8 +38,29 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="convert_columns_to_string",
             ),
             node(
+                adjust_separator,
+                inputs=[
+                    "sales_with_dates_string",
+                    "params:adjust_separator.column_name",
+                    "params:adjust_separator.separator.current",
+                    "params:adjust_separator.separator.new",
+                ],
+                outputs="sales_with_dates_adjusted_separator",
+                name="adjust_separator",
+            ),
+            node(
+                round_columns,
+                inputs=[
+                    "sales_with_dates_adjusted_separator",
+                    "params:round_columns.columns",
+                    "params:round_columns.decimals",
+                ],
+                outputs="sales_with_dates_rounded",
+                name="round_columns",
+            ),
+            node(
                 fill_na_with_median,
-                inputs=["sales_with_dates_string", "params:columns_to_fill_na"],
+                inputs=["sales_with_dates_rounded", "params:columns_to_fill_na"],
                 outputs="treated_sales_data_initial",
                 name="fill_na_with_median",
             ),
@@ -95,6 +118,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="treated_sales_data",
                 name="calculate_vlr_venda_baseline",
-            )
+            ),
         ]
     )
