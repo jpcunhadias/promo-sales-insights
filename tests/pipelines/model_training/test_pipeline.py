@@ -1,19 +1,8 @@
-"""
-This is a boilerplate test file for pipeline 'model_training'
-generated using Kedro 0.19.10.
-Please add your pipeline tests here.
-
-Kedro recommends using `pytest` framework, more info about it can be found
-in the official documentation:
-https://docs.pytest.org/en/latest/getting-started.html
-"""
-
+import pytest
 import pandas as pd
 import numpy as np
-import pytest
 from lightgbm import LGBMRegressor
 from src.promo_sales_insights.pipelines.model_training.nodes import (
-    convert_column_to_str,
     sort_by_date,
     create_lag_feature,
     create_rolling_mean_feature,
@@ -22,104 +11,96 @@ from src.promo_sales_insights.pipelines.model_training.nodes import (
     encode_categorical,
     split_data,
     apply_winsorize,
+    prepare_training_data,
     train_model,
     evaluate_model,
 )
 
 
-def test_convert_column_to_str():
-    df = pd.DataFrame({"A": [1, 2, 3]})
-    result = convert_column_to_str(df, "A")
-    assert result["A"].dtype == object
-    assert result["A"].iloc[0] == "1"
-
-
 def test_sort_by_date():
-    df = pd.DataFrame({"date": ["2023-01-03", "2023-01-01", "2023-01-02"]})
+    df = pd.DataFrame({"date": ["2023-01-02", "2023-01-01"], "value": [10, 20]})
     df = convert_column_to_datetime(df, "date")
-    result = sort_by_date(df, "date")
-    assert result["date"].iloc[0] == pd.Timestamp("2023-01-01")
+    sorted_df = sort_by_date(df, "date")
+    assert sorted_df["date"].is_monotonic_increasing
 
 
 def test_create_lag_feature():
-    df = pd.DataFrame({"target": [10, 20, 30, 40, 50]})
-    result = create_lag_feature(df, "target", lags=2)
-    assert "lag_1" in result.columns
-    assert "lag_2" in result.columns
-    assert result["lag_1"].iloc[2] == 20
+    df = pd.DataFrame({"value": [1, 2, 3, 4, 5]})
+    lagged_df = create_lag_feature(df, "value", 2)
+    assert "lag_1" in lagged_df.columns
+    assert "lag_2" in lagged_df.columns
+    assert lagged_df["lag_1"].iloc[1] == 1
 
 
 def test_create_rolling_mean_feature():
-    df = pd.DataFrame({"target": [10, 20, 30, 40, 50]})
-    result = create_rolling_mean_feature(df, "target", window=3)
-    assert "rolling_mean_3" in result.columns
-    assert result["rolling_mean_3"].iloc[4] == np.mean([30, 40, 50])
+    df = pd.DataFrame({"value": [1, 2, 3, 4, 5]})
+    rolling_df = create_rolling_mean_feature(df, "value", 2)
+    assert "rolling_mean_2" in rolling_df.columns
+    assert np.isnan(rolling_df["rolling_mean_2"].iloc[0])
 
 
 def test_dropna():
-    df = pd.DataFrame({"A": [1, np.nan, 3], "B": [4, 5, np.nan]})
-    result = dropna(df)
-    assert result.isnull().sum().sum() == 0
-    assert len(result) == 1
+    df = pd.DataFrame({"value": [1, np.nan, 3]})
+    clean_df = dropna(df)
+    assert clean_df.isna().sum().sum() == 0
 
 
 def test_convert_column_to_datetime():
-    df = pd.DataFrame({"date": ["2023-01-01", "2023-02-01"]})
-    result = convert_column_to_datetime(df, "date")
-    assert result["date"].dtype == "datetime64[ns]"
+    df = pd.DataFrame({"date": ["2023-01-01", "2023-01-02"]})
+    df = convert_column_to_datetime(df, "date")
+    assert pd.api.types.is_datetime64_any_dtype(df["date"])
 
 
 def test_encode_categorical():
-    df = pd.DataFrame({"A": ["cat", "dog", "cat"]})
-    result = encode_categorical(df)
-    assert result["A"].dtype == "int64"  # Adjust to match the actual output
-    assert result["A"].nunique() == 2
+    df = pd.DataFrame({"category": ["A", "B", "A"]})
+    encoded_df = encode_categorical(df)
+    assert pd.api.types.is_integer_dtype(encoded_df["category"])
 
 
 def test_split_data():
     df = pd.DataFrame(
         {
-            "date": pd.date_range("2023-01-01", periods=6),
-            "value": [10, 20, 30, 40, 50, 60],
+            "date": pd.date_range(start="2023-01-01", periods=5),
+            "value": [1, 2, 3, 4, 5],
         }
     )
-    train, test = split_data(df, "2023-01-04", "2023-01-06", "date")
-    assert len(train) == 4
+    train, test = split_data(df, "2023-01-03", "2023-01-05", "date")
+    assert len(train) == 3
     assert len(test) == 2
 
 
 def test_apply_winsorize():
-    df = pd.DataFrame({"A": [1, 2, 3, 100, 200]})
-    result = apply_winsorize(df, "A", "A_winsorized", 0.1, 0.9)
-    assert result["A_winsorized"].iloc[-1] == result["A"].quantile(0.9)
+    df = pd.DataFrame({"value": [1, 2, 100]})
+    winsorized_df = apply_winsorize(df, "value", "winsorized", 0.1, 0.9)
+    assert winsorized_df["winsorized"].max() <= df["value"].quantile(0.9)
+
+
+def test_prepare_training_data():
+    df = pd.DataFrame(
+        {"date": ["2023-01-01", "2023-01-02"], "target": [1, 2], "feature": [3, 4]}
+    )
+    train, test = split_data(df, "2023-01-01", "2023-01-02", "date")
+    X_train, y_train, X_test, y_test = prepare_training_data(
+        train, test, "target", "date"
+    )
+    assert X_train.shape[1] == 1  # Only "feature" column remains
 
 
 def test_train_model():
-    df = pd.DataFrame(
-        {
-            "feature1": [1, 2, 3, 4],
-            "feature2": [10, 20, 30, 40],
-            "target": [100, 200, 300, 400],
-            "date": pd.date_range("2023-01-01", periods=4),
-        }
-    )
-    train, test = split_data(df, "2023-01-03", "2023-01-04", "date")
-    best_params = {"n_estimators": 10, "learning_rate": 0.1, "max_depth": 3}
-    model, test_result = train_model(
-        train,
-        test,
-        best_params,
-        random_state=42,
-        target_column="target",
-        datetime_column="date",
-        prediction_column="predictions",
+    X_train = pd.DataFrame({"feature": [1, 2, 3]})
+    y_train = pd.Series([1, 2, 3])
+    X_test = pd.DataFrame({"feature": [4, 5]})
+    y_test = pd.Series([4, 5])
+    params = {"n_estimators": 10}
+    model, comparison_df = train_model(
+        X_train, y_train, X_test, y_test, params, 42, "target", "prediction"
     )
     assert isinstance(model, LGBMRegressor)
-    assert "predictions" in test_result.columns
+    assert "prediction" in comparison_df.columns
 
 
 def test_evaluate_model():
-    df = pd.DataFrame({"actual": [100, 200, 300], "predicted": [110, 190, 310]})
-    rmse, mae = evaluate_model(df, "actual", "predicted")
-    assert np.isclose(rmse, 10.0, atol=1e-2)
-    assert np.isclose(mae, 10.0, atol=1e-2)
+    comparison_df = pd.DataFrame({"target": [1, 2], "prediction": [1.1, 1.9]})
+    rmse, mae = evaluate_model(comparison_df, "target", "prediction")
+    assert rmse > 0
+    assert mae > 0

@@ -55,7 +55,7 @@ def create_lag_feature(df: pd.DataFrame, target_column: str, lags: int) -> pd.Da
 
 
 def create_rolling_mean_feature(
-        df: pd.DataFrame, target_column: str, window: int
+    df: pd.DataFrame, target_column: str, window: int
 ) -> pd.DataFrame:
     """
     Creates rolling mean features for the specified target column.
@@ -127,7 +127,7 @@ def encode_categorical(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def split_data(
-        df: pd.DataFrame, train_end_date: str, test_end_date: str, datetime_column: str
+    df: pd.DataFrame, train_end_date: str, test_end_date: str, datetime_column: str
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Splits the DataFrame into training and testing datasets based on date.
@@ -145,13 +145,13 @@ def split_data(
     train = df[df[datetime_column] <= train_end_date]
     test = df[
         (df[datetime_column] > train_end_date) & (df[datetime_column] <= test_end_date)
-        ]
+    ]
     logger.info("Train set size: %d, Test set size: %d.", len(train), len(test))
     return train, test
 
 
 def apply_winsorize(
-        df: pd.DataFrame, column: str, new_column_name: str, lower: float, upper: float
+    df: pd.DataFrame, column: str, new_column_name: str, lower: float, upper: float
 ) -> pd.DataFrame:
     """
     Applies winsorization to a specified column.
@@ -185,10 +185,10 @@ def apply_winsorize(
 
 
 def prepare_training_data(
-        train_data: pd.DataFrame,
-        test_data: pd.DataFrame,
-        target_column: str,
-        datetime_column: str,
+    train_data: pd.DataFrame,
+    test_data: pd.DataFrame,
+    target_column: str,
+    datetime_column: str,
 ) -> Tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
     """
     Prepares training and testing data by selecting features and splitting into X and y.
@@ -215,14 +215,14 @@ def prepare_training_data(
 
 
 def train_model(
-        X_train: pd.DataFrame,
-        y_train: pd.Series,
-        X_test: pd.DataFrame,
-        y_test: pd.Series,
-        best_params: dict,
-        random_state: int,
-        target_column: str,
-        prediction_column: str,
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
+    best_params: dict,
+    random_state: int,
+    target_column: str,
+    prediction_column: str,
 ) -> Tuple[LGBMRegressor, pd.DataFrame]:
     """
     Trains a LightGBM model and generates predictions on the test data.
@@ -263,7 +263,7 @@ def train_model(
 
 
 def evaluate_model(
-        comparison_df: pd.DataFrame, target_column: str, prediction_column: str
+    comparison_df: pd.DataFrame, target_column: str, prediction_column: str
 ) -> Tuple[float, float]:
     """
     Evaluates the model performance using Mean Squared Error (MSE) and Mean Absolute Error (MAE).

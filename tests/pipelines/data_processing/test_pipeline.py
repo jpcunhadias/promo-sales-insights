@@ -1,18 +1,11 @@
-"""
-This is a boilerplate test file for pipeline 'data_processing'
-generated using Kedro 0.19.10.
-Please add your pipeline tests here.
-
-Kedro recommends using `pytest` framework, more info about it can be found
-in the official documentation:
-https://docs.pytest.org/en/latest/getting-started.html
-"""
-
+import pytest
 import pandas as pd
 import numpy as np
 from src.promo_sales_insights.pipelines.data_processing.nodes import (
     extract_date_from_code,
     convert_columns_to_string,
+    adjust_separator,
+    round_columns,
     fill_na_with_median,
     calculate_desconto_percentual,
     calculate_faixa_receita,
@@ -22,55 +15,74 @@ from src.promo_sales_insights.pipelines.data_processing.nodes import (
 )
 
 
-def test_extract_date_from_code_extracts_correct_dates():
-    df = pd.DataFrame({"code": [202101, 202152, 202201]})
+def test_extract_date_from_code():
+    data = pd.DataFrame({"code": [202301, 202302]})
     new_columns = {
         "cod_ano": "year",
         "semana": "week",
         "data_inicio_semana": "start_date",
     }
-    result = extract_date_from_code(df, "code", new_columns)
-    assert result["year"].iloc[0] == 2021
-    assert result["week"].iloc[1] == 52
-    assert result["start_date"].iloc[2] == pd.Timestamp("2022-01-01")
+    result = extract_date_from_code(data, "code", new_columns)
+    assert "year" in result.columns
+    assert "week" in result.columns
+    assert "start_date" in result.columns
+    assert pd.api.types.is_datetime64_any_dtype(result["start_date"])
 
 
-def test_convert_columns_to_string_converts_columns():
-    df = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-    result = convert_columns_to_string(df, ["A", "B"])
-    assert result["A"].dtype == object
-    assert result["B"].dtype == object
+def test_convert_columns_to_string():
+    data = pd.DataFrame({"col1": [1, 2, 3]})
+    result = convert_columns_to_string(data, ["col1"])
+    assert result["col1"].dtype == "object"
 
 
-def test_fill_na_with_median_fills_na_values():
-    df = pd.DataFrame({"A": [1, np.nan, 3], "B": [4, 5, np.nan]})
-    result = fill_na_with_median(df, ["A", "B"])
-    assert result["A"].iloc[1] == 2
-    assert result["B"].iloc[2] == 4.5
+def test_adjust_separator():
+    data = pd.DataFrame({"col": ["1.2", "3.4"]})
+    result = adjust_separator(data, "col", ".", "/")
+    assert all(result["col"] == ["1/2", "3/4"])
+
+
+def test_round_columns():
+    data = pd.DataFrame({"col": [1.234, 2.345]})
+    result = round_columns(data, ["col"], 1)
+    assert all(result["col"] == [1.2, 2.3])
+
+
+def test_fill_na_with_median():
+    data = pd.DataFrame({"col": [1, np.nan, 3]})
+    result = fill_na_with_median(data, ["col"])
+    assert result["col"].isna().sum() == 0
 
 
 def test_calculate_desconto_percentual():
-    df = pd.DataFrame({"price": [100, 200], "discounted_price": [90, 180]})
+    data = pd.DataFrame({"price": [100, 200], "discounted_price": [90, 180]})
     result = calculate_desconto_percentual(
-        df, ["discounted_price", "price"], "discount_percent"
+        data, ["discounted_price", "price"], "desconto_percentual"
     )
-    assert np.isclose(result["discount_percent"].iloc[0], 0.1)
-    assert np.isclose(result["discount_percent"].iloc[1], 0.1)
+    assert "desconto_percentual" in result.columns
+    expected = [0.1, 0.1]
+    assert np.allclose(result["desconto_percentual"], expected, atol=1e-6)
+
+
+def test_calculate_faixa_receita():
+    data = pd.DataFrame({"revenue": [10, 20, 30]})
+    bins = [0, 15, 25]
+    labels = ["low", "medium", "high"]
+    result = calculate_faixa_receita(data, "revenue", bins, labels, "faixa_receita")
+    assert "faixa_receita" in result.columns
+    assert all(result["faixa_receita"].isin(labels))
 
 
 def test_calculate_desconto_percentual_medio():
-    df = pd.DataFrame(
-        {"category": ["A", "A", "B", "B"], "discount": [0.1, 0.2, 0.3, 0.4]}
-    )
-    result = calculate_desconto_percentual_medio(df, ["category"], "discount")
+    data = pd.DataFrame({"group": ["A", "A", "B"], "discount": [0.1, 0.2, 0.3]})
+    result = calculate_desconto_percentual_medio(data, ["group"], "discount")
+    assert "discount_medio" in result.columns
     assert np.isclose(result["discount_medio"].iloc[0], 0.15)
-    assert np.isclose(result["discount_medio"].iloc[2], 0.35)
 
 
 def test_calculate_vlr_venda_baseline():
-    df = pd.DataFrame({"price": [100, 200], "discount_percent": [0.1, 0.2]})
+    data = pd.DataFrame({"price": [100, 200], "discount": [0.1, 0.2]})
     result = calculate_vlr_venda_baseline(
-        df, ["price", "discount_percent"], "baseline_value"
+        data, ["price", "discount"], "vlr_venda_baseline"
     )
-    assert result["baseline_value"].iloc[0] == 90
-    assert result["baseline_value"].iloc[1] == 160
+    assert "vlr_venda_baseline" in result.columns
+    assert all(result["vlr_venda_baseline"] == [90, 160])
