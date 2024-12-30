@@ -14,3 +14,16 @@ treated_sales_data:
     sep: ","
     decimal: "."
     encoding: "utf-8"
+
+regressor:
+  type: pickle.PickleDataset
+  filepath: data/06_models/regressor.pkl
+
+test_data_with_predictions:
+    type: pandas.CSVDataset
+    filepath: data/07_model_output/predictions.csv
+    save_args:
+        index: False
+        sep: ","
+        decimal: "."
+        encoding: "utf-8"

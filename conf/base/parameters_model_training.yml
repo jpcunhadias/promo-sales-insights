@@ -1,0 +1,31 @@
+# Boilerplate parameters configuration for pipeline 'model_training'
+# Generated using Kedro 0.19.10
+#
+# Documentation for this file format can be found under "Parameters"
+# Link: https://docs.kedro.org/en/0.19.10/configuration/parameters.html
+
+target_variable: "vlr_rbv_real_so_tt"  # Target variable for the model
+datetime_column: "data_inicio_semana"  # Column representing the datetime
+prediction_column: "prediction"      # Column representing the prediction
+column_to_convert_to_str: "cod_agrupador_sap_material"  # Column to convert to string
+week_range_for_lags: 3                # Number of weeks for lag features
+window_rolling_mean: 3                # Window size for rolling mean
+
+
+training_params:
+  random_state: 42                     # Random state for reproducibility
+  train_end_date: "2022-12-31"        # End date for training data
+  test_end_date: "2023-03-12"         # End date for testing data
+  best_params:                        # Best parameters for LGBMRegressor
+    n_estimators: 142
+    learning_rate: 0.06786367203357008
+    max_depth: 7
+    num_leaves: 23
+    subsample: 0.8505607445033715
+    colsample_bytree: 0.8249469878368129
+
+winsorize:
+  column: "vlr_desconto_real"         # Column to apply winsorization
+  new_column_name: "vlr_desconto_real_winsorized"  # New column name for winsorized column
+  lower_bound: 0.01                  # Lower percentile for winsorization
+  upper_bound: 0.99                  # Upper percentile for winsorization
